@@ -19,7 +19,7 @@ canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block;touch-ac
 window.onerror=function(m){document.getElementById('err').textContent='Error: '+m};
 const cv=document.getElementById('c'),x=cv.getContext('2d');
 let W,H,dpr,hz,gy,lw,unit,sky,vig,bld=[];
-const F=10;
+const F=10,VER='v1.5 (Nov 22)';
 function resize(){
  dpr=Math.min(window.devicePixelRatio||1,2);W=window.innerWidth;H=window.innerHeight;
  cv.width=W*dpr;cv.height=H*dpr;x.setTransform(dpr,0,0,dpr,0,0);
@@ -460,7 +460,7 @@ function draw(){
  if(flash>0){x.fillStyle='rgba(255,60,60,'+Math.min(.5,flash*.5)+')';x.fillRect(0,0,W,H)}
  if(state==='title'){
   x.fillStyle='rgba(10,5,30,.55)';x.fillRect(0,H*.12,W,H*.3);
-  say('RAIL RUSH',H*.23,W*.13,'#ffd23f');if(best>0)say('Best: '+best,H*.44,W*.04,'#ffd23f');
+  say('RAIL RUSH',H*.23,W*.13,'#ffd23f');x.textAlign='left';x.fillStyle='rgba(255,255,255,.45)';x.font='12px sans-serif';x.fillText(VER,10,H-10);x.textAlign='center';if(best>0)say('Best: '+best,H*.44,W*.04,'#ffd23f');
   if(padOn){say('D-pad / stick ← → to switch tracks',H*.30,W*.04);say('✕ jump   ○ slide   □ / R1 fire',H*.34,W*.04);say('Press ✕ to start',H*.39,W*.05,'#8fe8dc')}
   else{say('Swipe ← → to switch tracks',H*.30,W*.04);say('Swipe ↑ to jump, ↓ to slide',H*.34,W*.04);say('Tap to start',H*.39,W*.05,'#8fe8dc')}
   say(padOn?'🎮 △ menus (Heroes, Crates, Powers, Sound)':'🎮 Using a controller? Press any button on it',H*.95,W*.032,padOn?'#7dffa0':'#8fe8dc');
