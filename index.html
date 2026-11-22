@@ -8,7 +8,7 @@
 <style>
 html,body{margin:0;height:100%;background:#1a1038;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block;touch-action:none}
-#tab,#tab2,#tab3,#tab4{position:fixed;left:0;top:20%;z-index:7;padding:16px 8px;writing-mode:vertical-rl;background:#5ef2ff;color:#12062e;font:bold 15px sans-serif;border-radius:0 12px 12px 0;transition:left .25s}#tab2{top:38%}#tab3{top:56%}#tab4{top:74%}#tab.open,#tab2.open,#tab3.open,#tab4.open{left:150px}.ti{color:#5ef2ff;font:bold 15px sans-serif;margin:10px 0}.bt{background:#5ef2ff;color:#12062e;font:bold 14px sans-serif;padding:10px;border-radius:10px;text-align:center;margin:8px 0}.tx{color:#fff;font:13px sans-serif;margin:6px 0}#pv{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,1,15,.78);z-index:20}#pvb{width:280px;padding:16px;border-radius:18px;background:#1b0b3d;border:2px solid #5ef2ff;text-align:center}#pvc{height:240px;display:flex;align-items:center;justify-content:center}#pvc canvas{position:static;width:240px;height:240px;touch-action:none}#panel{position:fixed;left:0;top:0;bottom:0;width:150px;box-sizing:border-box;padding:48px 12px;background:rgba(15,6,40,.96);transform:translateX(-100%);transition:transform .25s;z-index:6;overflow:auto}#panel.open{transform:none}.ch{display:flex;align-items:center;gap:10px;color:#fff;font:bold 14px sans-serif;padding:10px;border-radius:10px;margin-bottom:8px;border:2px solid transparent;background:#ffffff14}.ch.sel{border-color:#5ef2ff}.sw{width:24px;height:34px;border-radius:12px 12px 5px 5px}#err{position:fixed;left:8px;right:8px;top:8px;color:#fff;font:12px sans-serif;z-index:9}
+#tab,#tab2,#tab3,#tab4{position:fixed;left:0;top:20%;z-index:7;padding:16px 8px;writing-mode:vertical-rl;background:#5ef2ff;color:#12062e;font:bold 15px sans-serif;border-radius:0 12px 12px 0;transition:left .25s}#tab2{top:38%}#tab3{top:56%}#tab4{top:74%}#tab.open,#tab2.open,#tab3.open,#tab4.open{left:150px}.ti{color:#5ef2ff;font:bold 15px sans-serif;margin:10px 0}.bt{background:#5ef2ff;color:#12062e;font:bold 14px sans-serif;padding:10px;border-radius:10px;text-align:center;margin:8px 0}.tx{color:#fff;font:13px sans-serif;margin:6px 0}#pv{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,1,15,.78);z-index:20}#pvb{width:280px;padding:16px;border-radius:18px;background:#1b0b3d;border:2px solid #5ef2ff;text-align:center}#pvc{height:240px;display:flex;align-items:center;justify-content:center}#pvc canvas{position:static;width:240px;height:240px;touch-action:none}#panel{position:fixed;left:0;top:0;bottom:0;width:150px;box-sizing:border-box;padding:48px 12px;background:rgba(15,6,40,.96);transform:translateX(-100%);transition:transform .25s;z-index:6;overflow:auto}#panel.open{transform:none}.ch{display:flex;align-items:center;gap:10px;color:#fff;font:bold 14px sans-serif;padding:10px;border-radius:10px;margin-bottom:8px;border:2px solid transparent;background:#ffffff14}.ch.sel{border-color:#5ef2ff}.gf{outline:3px solid #ffd23f;outline-offset:2px;box-shadow:0 0 12px #ffd23f}.sw{width:24px;height:34px;border-radius:12px 12px 5px 5px}#err{position:fixed;left:8px;right:8px;top:8px;color:#fff;font:12px sans-serif;z-index:9}
 </style>
 </head>
 <body>
@@ -238,11 +238,20 @@ function pollPad(){
  const E={};for(const k of['x','o','sq','tri','l1','r1','l2','r2','opt','tp','up','dn','lf','rt']){E[k]=!!c[k]&&!padPrev[k];padPrev[k]=!!c[k]}
  const sx2=ax<-.55?-1:ax>.55?1:0,sy2=ay<-.6?-1:ay>.6?1:0;
  const sL=sx2===-1&&padAxis.x!==-1,sR=sx2===1&&padAxis.x!==1,sU=sy2===-1&&padAxis.y!==-1,sD=sy2===1&&padAxis.y!==1;padAxis.x=sx2;padAxis.y=sy2;
- if(document.getElementById('pv').style.display==='flex'){if(E.o)closePv();return}
+ if(document.getElementById('pv').style.display==='flex'){if(E.x)document.getElementById('pveq').onclick();else if(E.o||E.tri)closePv();return}
  if(state==='pause'){if(E.up||sU)pauseNav('u');if(E.dn||sD)pauseNav('d');if(E.x)PM[pmSel][1]();else if(E.o||E.opt||E.tp)resume();return}
  if(state==='count')return;
  if(state==='play'&&(E.opt||E.tp)){pauseGame();return}
- if(state!=='play'){if(E.x||E.opt||E.o||E.sq||E.tri)start();return}
+ if(state!=='play'){
+  if(scare>0)return;
+  if(panel.classList.contains('open')){
+   if(E.o||E.tri){openP(mode);return}
+   if(E.l1||E.l2||E.lf||sL)menuTab(-1);else if(E.r1||E.r2||E.rt||sR)menuTab(1);
+   if(E.up||sU)menuFocus(-1);else if(E.dn||sD)menuFocus(1);
+   if(E.x){const it=menuItems()[gfi];if(it)it.click()}
+   return}
+  if(E.tri){openP(mode);gfi=0;menuFocus(0);return}
+  if(E.x||E.opt)start();return}
  if(E.lf||sL||E.l1||E.l2)move('l');
  if(E.rt||sR)move('r');
  if(E.x||E.up||sU)move('u');
@@ -454,13 +463,13 @@ function draw(){
   say('RAIL RUSH',H*.23,W*.13,'#ffd23f');if(best>0)say('Best: '+best,H*.44,W*.04,'#ffd23f');
   if(padOn){say('D-pad / stick ← → to switch tracks',H*.30,W*.04);say('✕ jump   ○ slide   □ / R1 fire',H*.34,W*.04);say('Press ✕ to start',H*.39,W*.05,'#8fe8dc')}
   else{say('Swipe ← → to switch tracks',H*.30,W*.04);say('Swipe ↑ to jump, ↓ to slide',H*.34,W*.04);say('Tap to start',H*.39,W*.05,'#8fe8dc')}
-  say(padOn?'🎮 Controller connected':'🎮 Using a controller? Press any button on it',H*.95,W*.032,padOn?'#7dffa0':'#8fe8dc');
+  say(padOn?'🎮 △ menus (Heroes, Crates, Powers, Sound)':'🎮 Using a controller? Press any button on it',H*.95,W*.032,padOn?'#7dffa0':'#8fe8dc');
  }
  if(state==='over'){
   x.fillStyle='rgba(10,5,30,.65)';x.fillRect(0,H*.12,W,H*.3);
   say('CRASHED!',H*.23,W*.12,'#ff6b5e');
   say(score()+' pts   Best '+best,H*.31,W*.05);say(note,H*.345,W*.04,'#ffd23f');
-  const rdy=performance.now()-overAt>=1600;x.globalAlpha=rdy?1:.35;say(padOn?'Press ✕ to run again':'Tap to run again',H*.38,W*.05,'#8fe8dc');x.globalAlpha=1;say(Math.floor(dist)+'m run  ·  ● '+coins+' coins',H*.45,W*.04,'#fff4d6');
+  const rdy=performance.now()-overAt>=1600;x.globalAlpha=rdy?1:.35;say(padOn?'Press ✕ to run again':'Tap to run again',H*.38,W*.05,'#8fe8dc');x.globalAlpha=1;say(Math.floor(dist)+'m run  ·  ● '+coins+' coins',H*.45,W*.04,'#fff4d6');if(padOn)say('△ menus: heroes, crates, powers, sound',H*.95,W*.032,'#7dffa0');
  }
 }
 function move(d){
@@ -493,8 +502,9 @@ function norm(){sv.own.h=sv.own.h||[];sv.own.g=sv.own.g||[];sv.dup.h=sv.dup.h||{
 function save(){try{localStorage.setItem('railrush_save',JSON.stringify(sv))}catch(e){}}
 let mode='h',crateMsg='',pwMsg='';const JV=[5,12,25,15,20,30,16,18,22,26,10,10],PV=[5,10,18,14,22,28,16,18,22,26,10,10],HV=[8,8,20,12,10,10,10,10],GV=[8,10,14,18,12,12],PWN={dj:'DOUBLE JUMP',ind:'INDESTRUCTIBLE',cape:'CAPE: up=fly, down=land'},PWL={dj:'Double Jump',ind:'Indestructible',cape:'Flying Cape'},PWC={dj:30,ind:60,cape:50};
 function build(){
- panel.innerHTML='';
+ panel.innerHTML='';setTimeout(()=>{if(padOn&&panel.classList.contains('open'))menuFocus(0)},0);
  const add=(h,cls,fn)=>{const d=document.createElement('div');d.className=cls||'';d.innerHTML=h;if(fn)d.onclick=fn;panel.appendChild(d)};
+ if(padOn)add('<b>L1 / R1</b> switch menu<br>↑↓ move · ✕ select · ○ close','tx');
  const sw=(a,b)=>'<div class="sw" style="background:'+a+';border-top:9px solid '+b+'"></div>';
  if(mode==='h'){add('Pick a hero','ti');CH.forEach((c,i)=>add(sw(c.body,c.cap)+c.n,'ch'+(i===cur?' sel':''),()=>{cur=i;try{localStorage.setItem('railrush_char',i)}catch(e){}build()}));return}
  if(mode==='a'){add('Sound','ti');add('Pick your background music','tx');
@@ -664,6 +674,11 @@ function buildOld(){panel.innerHTML='<div style="color:#5ef2ff;font:bold 15px sa
 build();
 document.getElementById('pvx').onclick=closePv;
 const tab2=document.getElementById('tab2'),tab3=document.getElementById('tab3'),tab4=document.getElementById('tab4');
+// ---- Controller navigation for the side menus ----
+let gfi=0;const MODES=['h','c','s','a'];
+function menuItems(){return [...panel.children].filter(el=>el.onclick)}
+function menuFocus(d){const it=menuItems();if(!it.length)return;gfi=Math.max(0,Math.min(it.length-1,gfi+d));it.forEach((el,i)=>el.classList.toggle('gf',i===gfi));it[gfi].scrollIntoView({block:'nearest'})}
+function menuTab(d){mode=MODES[(MODES.indexOf(mode)+d+MODES.length)%MODES.length];gfi=0;build()}
 function openP(m){const same=panel.classList.contains('open')&&mode===m;mode=m;build();panel.classList.toggle('open',!same);tab.classList.toggle('open',!same);tab2.classList.toggle('open',!same);tab3.classList.toggle('open',!same);tab4.classList.toggle('open',!same)}
 tab.onclick=()=>openP('h');tab2.onclick=()=>openP('c');tab3.onclick=()=>openP('s');tab4.onclick=()=>openP('a');
 const ss=[];let lastFree=0;let note='';let scare=0;const met=[];let showerT=300,showerOn=0;let last=performance.now();
