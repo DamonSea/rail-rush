@@ -15,6 +15,13 @@ A neon space lane-runner you play in the browser. Switch between three tracks, j
 - **Swipe ↑** or **W / Space / ↑**: jump
 - **Swipe ↓** or **S / ↓**: slide
 
+### PS5 controller (or any Bluetooth/USB gamepad)
+- **D-pad / left stick ← →** (or **L1**): switch tracks
+- **✕** or **↑**: jump · **○** or **↓**: slide
+- **□ / R1 / R2**: fire the Ray Blaster at UFOs
+- **✕** or **Options**: start / run again
+- The controller rumbles when you get hit
+
 ## Features
 - 15 heroes, crates with hats, glasses, jetpacks and pogo sticks (3D previews)
 - Starting powers: Double Jump, Indestructible, Flying Cape
