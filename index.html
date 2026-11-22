@@ -207,27 +207,42 @@ function fireBlaster(){if(canFire()&&ufo.cool<=0){ufo.fire=.15;ufo.cool=.5;ufo.h
 function tapBtn(px,py){
  if(canFire()&&px>=W-100&&px<=W-16&&py>=H*.5&&py<=H*.5+84){fireBlaster();return true}
  return false}
-// ---- Gamepad (PS5 DualSense / any standard controller) ----
-let padOn=false,padPrev={},padAxis={x:0,y:0};
-window.addEventListener('gamepadconnected',()=>{padOn=true});
-window.addEventListener('gamepaddisconnected',()=>{padOn=[...(navigator.getGamepads?navigator.getGamepads():[])].some(g=>g)});
-function getPad(){if(!navigator.getGamepads)return null;for(const g of navigator.getGamepads())if(g&&g.connected)return g;return null}
-function rumble(dur,str){try{const g=getPad();if(g&&g.vibrationActuator)g.vibrationActuator.playEffect('dual-rumble',{duration:dur*1000,strongMagnitude:str,weakMagnitude:str*.6})}catch(e){}}
+// ---- Gamepad (PS5 DualSense / any controller) ----
+// Reads EVERY connected pad (Macs sometimes list a phantom device first) and
+// handles both the 'standard' layout (Chrome/Edge/Safari) and the raw
+// DualSense layout Firefox uses on macOS.
+let padOn=false,padName='',padPrev={},padAxis={x:0,y:0};
+window.addEventListener('gamepadconnected',e=>{padOn=true;padName=e.gamepad.id});
+window.addEventListener('gamepaddisconnected',()=>{padOn=pads().length>0});
+function pads(){try{return [...(navigator.getGamepads?navigator.getGamepads():[])].filter(g=>g&&g.connected!==false)}catch(e){return []}}
+function getPad(){return pads()[0]||null}
+function rumble(dur,str){try{for(const g of pads()){if(g.vibrationActuator&&g.vibrationActuator.playEffect)g.vibrationActuator.playEffect('dual-rumble',{duration:dur*1000,strongMagnitude:str,weakMagnitude:str*.6}).catch(()=>{})}}catch(e){}}
+function readPad(g){
+ const p=i=>{const b=g.buttons[i];return !!b&&(b.pressed||b.value>.5)},o={};
+ if(g.mapping==='standard'){
+  o.x=p(0);o.o=p(1);o.sq=p(2);o.tri=p(3);o.l1=p(4);o.r1=p(5);o.l2=p(6);o.r2=p(7);o.opt=p(9)||p(8);o.up=p(12);o.dn=p(13);o.lf=p(14);o.rt=p(15);
+ }else{ // raw DualSense / DualShock layout (Firefox on Mac, some Linux)
+  o.sq=p(0);o.x=p(1);o.o=p(2);o.tri=p(3);o.l1=p(4);o.r1=p(5);o.l2=p(6);o.r2=p(7);o.opt=p(9)||p(8);
+  // D-pad arrives as a "hat" axis: -1 up, -0.43 right, 0.14 down, 0.71 left, >1 centred
+  if(g.axes.length>9){const v=g.axes[9];if(v>=-1.01&&v<=1.01){const st=Math.round((v+1)/(2/7));o.up=st===0||st===1||st===7;o.rt=st>=1&&st<=3;o.dn=st>=3&&st<=5;o.lf=st>=5&&st<=7}}
+  if(g.buttons.length>=16&&!(o.up||o.dn||o.lf||o.rt)){o.up=p(12);o.dn=p(13);o.lf=p(14);o.rt=p(15)}
+ }
+ o.ax=g.axes[0]||0;o.ay=g.axes[1]||0;return o}
 function pollPad(){
- const g=getPad();if(!g)return;padOn=true;
- const b=i=>!!(g.buttons[i]&&g.buttons[i].pressed),hit=i=>{const p=b(i),was=padPrev[i];padPrev[i]=p;return p&&!was};
- // Read all edges first so held buttons don't retrigger
- const X=hit(0),O=hit(1),SQ=hit(2),TRI=hit(3),L1=hit(4),R1=hit(5),R2=hit(7),OPT=hit(9),UP=hit(12),DN=hit(13),LF=hit(14),RT=hit(15);
- // Left stick, edge-triggered like a swipe
- const ax=g.axes[0]||0,ay=g.axes[1]||0,sx2=ax<-.55?-1:ax>.55?1:0,sy2=ay<-.6?-1:ay>.6?1:0;
+ const list=pads();if(!list.length)return;padOn=true;if(!padName)padName=list[0].id;
+ // Merge every pad's input so whichever one is the real controller works
+ const c={};let ax=0,ay=0;
+ for(const g of list){const o=readPad(g);for(const k in o)if(k!=='ax'&&k!=='ay')c[k]=c[k]||o[k];if(Math.abs(o.ax)>Math.abs(ax))ax=o.ax;if(Math.abs(o.ay)>Math.abs(ay))ay=o.ay}
+ const E={};for(const k of['x','o','sq','tri','l1','r1','l2','r2','opt','up','dn','lf','rt']){E[k]=!!c[k]&&!padPrev[k];padPrev[k]=!!c[k]}
+ const sx2=ax<-.55?-1:ax>.55?1:0,sy2=ay<-.6?-1:ay>.6?1:0;
  const sL=sx2===-1&&padAxis.x!==-1,sR=sx2===1&&padAxis.x!==1,sU=sy2===-1&&padAxis.y!==-1,sD=sy2===1&&padAxis.y!==1;padAxis.x=sx2;padAxis.y=sy2;
- if(document.getElementById('pv').style.display==='flex'){if(O)closePv();return}
- if(state!=='play'){if(X||OPT)start();return}
- if(LF||sL||L1)move('l');
- if(RT||sR)move('r');
- if(X||UP||sU)move('u');
- if(O||DN||sD)move('d');
- if(SQ||R1||R2||TRI)fireBlaster();
+ if(document.getElementById('pv').style.display==='flex'){if(E.o)closePv();return}
+ if(state!=='play'){if(E.x||E.opt||E.o||E.sq||E.tri)start();return}
+ if(E.lf||sL||E.l1||E.l2)move('l');
+ if(E.rt||sR)move('r');
+ if(E.x||E.up||sU)move('u');
+ if(E.o||E.dn||sD)move('d');
+ if(E.sq||E.r1||E.r2||E.tri)fireBlaster();
 }
 function drawBtns(){
  if(state!=='play')return;
@@ -406,6 +421,7 @@ function draw(){
   say('RAIL RUSH',H*.23,W*.13,'#ffd23f');
   if(padOn){say('D-pad / stick ← → to switch tracks',H*.30,W*.04);say('✕ jump   ○ slide   □ / R1 fire',H*.34,W*.04);say('Press ✕ to start',H*.39,W*.05,'#8fe8dc')}
   else{say('Swipe ← → to switch tracks',H*.30,W*.04);say('Swipe ↑ to jump, ↓ to slide',H*.34,W*.04);say('Tap to start',H*.39,W*.05,'#8fe8dc')}
+  say(padOn?'🎮 Controller connected':'🎮 Using a controller? Press any button on it',H*.95,W*.032,padOn?'#7dffa0':'#8fe8dc');
  }
  if(state==='over'){
   x.fillStyle='rgba(10,5,30,.65)';x.fillRect(0,H*.12,W,H*.3);
