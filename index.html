@@ -222,9 +222,9 @@ function rumble(dur,str){try{for(const g of pads()){if(g.vibrationActuator&&g.vi
 function readPad(g){
  const p=i=>{const b=g.buttons[i];return !!b&&(b.pressed||b.value>.5)},o={};
  if(g.mapping==='standard'){
-  o.x=p(0);o.o=p(1);o.sq=p(2);o.tri=p(3);o.l1=p(4);o.r1=p(5);o.l2=p(6);o.r2=p(7);o.opt=p(9)||p(8);o.up=p(12);o.dn=p(13);o.lf=p(14);o.rt=p(15);
+  o.x=p(0);o.o=p(1);o.sq=p(2);o.tri=p(3);o.l1=p(4);o.r1=p(5);o.l2=p(6);o.r2=p(7);o.opt=p(9)||p(8);o.tp=p(17)||(g.mapping!=='standard'&&p(13));o.up=p(12);o.dn=p(13);o.lf=p(14);o.rt=p(15);
  }else{ // raw DualSense / DualShock layout (Firefox on Mac, some Linux)
-  o.sq=p(0);o.x=p(1);o.o=p(2);o.tri=p(3);o.l1=p(4);o.r1=p(5);o.l2=p(6);o.r2=p(7);o.opt=p(9)||p(8);
+  o.sq=p(0);o.x=p(1);o.o=p(2);o.tri=p(3);o.l1=p(4);o.r1=p(5);o.l2=p(6);o.r2=p(7);o.opt=p(9)||p(8);o.tp=p(17)||(g.mapping!=='standard'&&p(13));
   // D-pad arrives as a "hat" axis: -1 up, -0.43 right, 0.14 down, 0.71 left, >1 centred
   if(g.axes.length>9){const v=g.axes[9];if(v>=-1.01&&v<=1.01){const st=Math.round((v+1)/(2/7));o.up=st===0||st===1||st===7;o.rt=st>=1&&st<=3;o.dn=st>=3&&st<=5;o.lf=st>=5&&st<=7}}
   if(g.buttons.length>=16&&!(o.up||o.dn||o.lf||o.rt)){o.up=p(12);o.dn=p(13);o.lf=p(14);o.rt=p(15)}
@@ -235,13 +235,13 @@ function pollPad(){
  // Merge every pad's input so whichever one is the real controller works
  const c={};let ax=0,ay=0;
  for(const g of list){const o=readPad(g);for(const k in o)if(k!=='ax'&&k!=='ay')c[k]=c[k]||o[k];if(Math.abs(o.ax)>Math.abs(ax))ax=o.ax;if(Math.abs(o.ay)>Math.abs(ay))ay=o.ay}
- const E={};for(const k of['x','o','sq','tri','l1','r1','l2','r2','opt','up','dn','lf','rt']){E[k]=!!c[k]&&!padPrev[k];padPrev[k]=!!c[k]}
+ const E={};for(const k of['x','o','sq','tri','l1','r1','l2','r2','opt','tp','up','dn','lf','rt']){E[k]=!!c[k]&&!padPrev[k];padPrev[k]=!!c[k]}
  const sx2=ax<-.55?-1:ax>.55?1:0,sy2=ay<-.6?-1:ay>.6?1:0;
  const sL=sx2===-1&&padAxis.x!==-1,sR=sx2===1&&padAxis.x!==1,sU=sy2===-1&&padAxis.y!==-1,sD=sy2===1&&padAxis.y!==1;padAxis.x=sx2;padAxis.y=sy2;
  if(document.getElementById('pv').style.display==='flex'){if(E.o)closePv();return}
- if(state==='pause'){if(E.up||sU)pauseNav('u');if(E.dn||sD)pauseNav('d');if(E.x)PM[pmSel][1]();else if(E.o||E.opt)resume();return}
+ if(state==='pause'){if(E.up||sU)pauseNav('u');if(E.dn||sD)pauseNav('d');if(E.x)PM[pmSel][1]();else if(E.o||E.opt||E.tp)resume();return}
  if(state==='count')return;
- if(state==='play'&&E.opt){pauseGame();return}
+ if(state==='play'&&(E.opt||E.tp)){pauseGame();return}
  if(state!=='play'){if(E.x||E.opt||E.o||E.sq||E.tri)start();return}
  if(E.lf||sL||E.l1||E.l2)move('l');
  if(E.rt||sR)move('r');

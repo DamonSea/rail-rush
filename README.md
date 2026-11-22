@@ -21,7 +21,7 @@ A neon space lane-runner you play in the browser. Switch between three tracks, j
 - **✕** or **↑**: jump · **○** or **↓**: slide
 - **□ / R1 / R2**: fire the Ray Blaster at UFOs
 - **✕** or **Options**: start / run again
-- **Options**: pause (↑↓ + ✕ in the pause menu, ○ to resume)
+- **Options** or **touchpad click**: pause (↑↓ + ✕ in the pause menu, ○ to resume)
 - The controller rumbles when you get hit
 
 ## Features
