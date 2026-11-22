@@ -27,4 +27,4 @@ A neon space lane-runner you play in the browser. Switch between three tracks, j
 - Starting powers: Double Jump, Indestructible, Flying Cape
 - UFO boss and the Ray Blaster
 - Neon planet double-speed boost
-- 4 background music tracks
+- 7 background music tracks, including 3 pulsing sci-fi synth tracks

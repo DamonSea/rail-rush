@@ -444,7 +444,7 @@ function build(){
  const sw=(a,b)=>'<div class="sw" style="background:'+a+';border-top:9px solid '+b+'"></div>';
  if(mode==='h'){add('Pick a hero','ti');CH.forEach((c,i)=>add(sw(c.body,c.cap)+c.n,'ch'+(i===cur?' sel':''),()=>{cur=i;try{localStorage.setItem('railrush_char',i)}catch(e){}build()}));return}
  if(mode==='a'){add('Sound','ti');add('Pick your background music','tx');
-  for(const p of[['off','Off'],['space','Space Drift'],['arcade','Neon Arcade'],['pulse','Deep Pulse'],['chimes','Star Chimes']])add(p[1],'ch'+(snd===p[0]?' sel':''),()=>setSnd(p[0]));
+  for(const p of[['off','Off'],['space','Space Drift'],['arcade','Neon Arcade'],['pulse','Deep Pulse'],['chimes','Star Chimes'],['hyper','Hyperdrive'],['nebula','Nebula Pulse'],['warp','Warp Core']])add(p[1],'ch'+(snd===p[0]?' sel':''),()=>setSnd(p[0]));
   add('Sound effects: '+(sfxOn?'On':'Off'),'bt',()=>{sfxOn=!sfxOn;build()});return}
  if(mode==='s'){add('Starting powers','ti');add('Starlight ✦: '+sv.star,'tx');add('Buy one, then pick it for your next run. It lasts 30 seconds, and you get no pogo or jetpack until it ends.','tx');
   for(const k of['dj','ind','cape']){add(PWL[k]+' ('+PWC[k]+' ✦)<br>Owned: '+sv.pw[k],'bt',()=>buyPw(k));if(sv.pw[k]>0)add(sv.pick===k?'Using next run':'Use next run','ch'+(sv.pick===k?' sel':''),()=>{sv.pick=sv.pick===k?null:k;save();build()})}
@@ -516,7 +516,7 @@ function skyRow(D){const free=lastFree=skyLane;
  }}
 function skyBurst(){skyLane=ri(3)-1;for(const dd of[26,50,74])skyRow(dd)}
 let AC=null,mg=null,sg=null,mtimer=null,sfxOn=true,snd='space',skyLane=0,planetT=12;
-try{const sv0=localStorage.getItem('railrush_snd');if(['off','space','arcade','pulse','chimes'].includes(sv0))snd=sv0}catch(e){}
+try{const sv0=localStorage.getItem('railrush_snd');if(['off','space','arcade','pulse','chimes','hyper','nebula','warp'].includes(sv0))snd=sv0}catch(e){}
 const CHD=[[220,261.6,329.6],[174.6,220,261.6],[261.6,329.6,392],[196,246.9,293.7]];
 function initAudio(){try{if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();mg=AC.createGain();mg.gain.value=.12;mg.connect(AC.destination);sg=AC.createGain();sg.gain.value=.5;sg.connect(AC.destination)}if(AC.state==='suspended')AC.resume();if(!mtimer)playMusic()}catch(e){}}
 function tone(f,t0,dur,type,vol,dest){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+.02);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);o.connect(g);g.connect(dest||mg);o.start(t0);o.stop(t0+dur+.05)}
@@ -533,13 +533,31 @@ function sfx(n){if(!AC||!sfxOn)return;try{
   try{navigator.vibrate&&navigator.vibrate([150,60,300])}catch(e){}
  }
 }catch(e){}}
+const SCI=[[220,261.6,329.6],[174.6,220,261.6],[196,233.1,293.7],[164.8,207.7,246.9]];
+let NB=null;function noiseBuf(){if(!NB){NB=AC.createBuffer(1,AC.sampleRate*.5|0,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}return NB}
+function ftone(f,t0,dur,type,vol,cut){const o=AC.createOscillator(),fl=AC.createBiquadFilter(),g=AC.createGain();o.type=type;o.frequency.value=f;fl.type='lowpass';fl.frequency.value=cut;fl.Q.value=6;g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+.01);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);o.connect(fl);fl.connect(g);g.connect(mg);o.start(t0);o.stop(t0+dur+.05)}
+function kick(t0,vol){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(150,t0);o.frequency.exponentialRampToValueAtTime(42,t0+.14);g.gain.setValueAtTime(vol,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+.28);o.connect(g);g.connect(mg);o.start(t0);o.stop(t0+.3)}
+function hat(t0,dur,vol,hp){const s=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain();s.buffer=noiseBuf();fl.type='highpass';fl.frequency.value=hp||7000;g.gain.setValueAtTime(vol,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);s.connect(fl);fl.connect(g);g.connect(mg);s.start(t0);s.stop(t0+dur+.02)}
 function stopMusic(){if(mtimer){clearInterval(mtimer);mtimer=null}}
 function playMusic(){stopMusic();if(!AC||snd==='off')return;let bar=0;
- const B={space:4,arcade:3.2,pulse:2,chimes:3}[snd];
+ const B={space:4,arcade:3.2,pulse:2,chimes:3,hyper:2,nebula:4,warp:1.6}[snd];
  const step=()=>{const t=AC.currentTime+.1,ch=CHD[bar%4];
   if(snd==='space'){for(const f of ch)tone(f,t,4.2,'sine',.3);tone(ch[2]*2,t+2,2,'triangle',.1)}
   else if(snd==='arcade'){for(let i=0;i<16;i++){tone(ch[i%3]*(i%4===3?2:1),t+i*.2,.18,'square',.14);if(i%4===0)tone(ch[0]/2,t+i*.2,.35,'triangle',.35)}}
   else if(snd==='pulse'){for(let i=0;i<4;i++){const o=AC.createOscillator(),g=AC.createGain(),tt=t+i*.5;o.frequency.setValueAtTime(130,tt);o.frequency.exponentialRampToValueAtTime(40,tt+.15);g.gain.setValueAtTime(.9,tt);g.gain.exponentialRampToValueAtTime(.0001,tt+.25);o.connect(g);g.connect(mg);o.start(tt);o.stop(tt+.3);tone(ch[0]/2,tt+.25,.2,'sawtooth',.15);tone(8000,tt+.25,.03,'square',.04)}}
+  else if(snd==='hyper'){const SC=SCI[bar%4];for(let i=0;i<16;i++){const tt=t+i*.125;
+    if(i%4===0)kick(tt,.9);if(i%4===2)hat(tt,.08,.05);if(i%8===4)hat(tt,.18,.12,1800);
+    ftone(SC[0]/2,tt,.11,'sawtooth',i%4===0?.28:.18,300+600*((i%4)/4));
+    if(i%2===0)ftone(SC[(i/2)%3]*(i%8<4?2:4),tt,.12,'square',.07,2600)}
+   ftone(SC[2]*2,t,1.9,'sawtooth',.05,900)}
+  else if(snd==='nebula'){const SC=SCI[bar%4];
+   for(const f of SC){const o=AC.createOscillator(),tr=AC.createGain(),g=AC.createGain(),lf=AC.createOscillator(),lg=AC.createGain();o.type='triangle';o.frequency.value=f;tr.gain.value=.5;lf.frequency.value=4;lg.gain.value=.5;lf.connect(lg);lg.connect(tr.gain);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.2,t+.3);g.gain.setValueAtTime(.2,t+3.6);g.gain.linearRampToValueAtTime(0,t+4.1);o.connect(tr);tr.connect(g);g.connect(mg);o.start(t);lf.start(t);o.stop(t+4.2);lf.stop(t+4.2)}
+   for(let i=0;i<8;i++){const tt=t+i*.5;ftone(SC[0]/2,tt,.4,'sine',.5,400);if(i%2)hat(tt+.25,.05,.04,6000)}
+   tone(SC[ri(3)]*4,t+1+Math.random()*2,1.2,'sine',.08)}
+  else if(snd==='warp'){const SC=SCI[bar%4],cut=500+((bar%4)*500);for(let i=0;i<16;i++){const tt=t+i*.1;
+    if(i%4===0)kick(tt,1);if(i%8===4)hat(tt,.15,.2,1200);if(i%2===1)hat(tt,.05,.06);
+    ftone(SC[0]/(i%3===2?1:2),tt,.09,'sawtooth',.22,cut+i*60)}
+   const L=[0,2,1,2];for(let k=0;k<4;k++)ftone(SC[L[k]]*4,t+k*.4+.2,.15,'square',.06,3000)}
   else{const P=[523.3,587.3,659.3,784,880];for(let k=0;k<5;k++)tone(P[ri(5)]*(Math.random()<.3?2:1),t+Math.random()*3,1.6,'sine',.22)}
   bar++};
  step();mtimer=setInterval(step,B*1000)}
